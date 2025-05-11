@@ -158,7 +158,20 @@ adaptation: Learning bounds and algorithms". In COLT, 2009.
         
         self.weights_ = np.array(sol["x"]).ravel()
         self.lambda_ = self.weights_[0]
-        self.weights_ = np.clip(self.weights_[1:], 0., np.inf)
+        # I modify below
+        uniform_alpha = kwargs.pop("uniform_alpha", None)
+        w_sdp = np.clip(self.weights_[1:], 0., np.inf)
+        w_sdp /= w_sdp.sum()
+        if uniform_alpha is not None:
+            alpha = float(uniform_alpha)
+            # Blend: alpha * uniform + (1-alpha) * w_sdp
+            w_mix = alpha * (1.0 / n) + (1 - alpha) * w_sdp
+            w_mix /= w_mix.sum()
+            self.weights_ = w_mix
+            if self.verbose:
+                print(f"Mixed with uniform (alpha={alpha:.2f})")
+        else:
+            self.weights_ = w_sdp
         return self.weights_
     
     
